@@ -261,18 +261,6 @@ validate_bool_setter = partial(_validate_setter, (bool,))
 validate_iterable_setter = partial(_validate_setter, (list, tuple))
 
 
-def merge_dicts(lhs, rhs):
-    for key, value in rhs.items():
-        if isinstance(value, dict):
-            node = lhs.setdefault(key, {})
-            merge_dicts(node, value)
-        elif isinstance(value, list):
-            array = lhs.setdefault(key, [])
-            array += value
-        else:
-            lhs[key] = value
-
-
 class ThreadLocals(object):
     LOCALS = None
 
