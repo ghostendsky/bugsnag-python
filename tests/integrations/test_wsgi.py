@@ -1,7 +1,6 @@
 from webtest import TestApp
 
 from bugsnag.wsgi.middleware import BugsnagMiddleware
-from six import Iterator
 import bugsnag.notification
 import bugsnag
 from tests.utils import IntegrationTest
@@ -68,7 +67,7 @@ class TestWSGI(IntegrationTest):
                          '/beans')
 
     def test_bugsnag_middleware_crash_on_iter(self):
-        class CrashOnIterApp(Iterator):
+        class CrashOnIterApp:
             def __init__(self, environ, start_response):
                 pass
 
@@ -87,7 +86,7 @@ class TestWSGI(IntegrationTest):
         assert 'environment' not in event['metaData']
 
     def test_bugsnag_middleware_crash_on_close(self):
-        class CrashOnCloseApp(Iterator):
+        class CrashOnCloseApp:
             def __init__(self, environ, start_response):
                 pass
 
