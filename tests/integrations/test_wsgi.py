@@ -48,11 +48,10 @@ class TestWSGI(IntegrationTest):
         payload = self.server.received[0]['json_body']
         event = payload['events'][0]
         self.assertEqual(event['context'], 'GET /beans')
-        self.assertEqual(event['metaData']['environment']['PATH_INFO'],
-                         '/beans')
+        assert 'environment' not in event['metaData']
 
-    def test_disable_environment(self):
-        bugsnag.configure(send_environment=False)
+    def test_enable_environment(self):
+        bugsnag.configure(send_environment=True)
 
         class CrashOnStartApp(object):
             def __init__(self, environ, start_response):
@@ -64,7 +63,9 @@ class TestWSGI(IntegrationTest):
 
         self.assertEqual(1, len(self.server.received))
         payload = self.server.received[0]['json_body']
-        assert 'environment' not in payload['events'][0]['metaData']
+        event = payload['events'][0]
+        self.assertEqual(event['metaData']['environment']['PATH_INFO'],
+                         '/beans')
 
     def test_bugsnag_middleware_crash_on_iter(self):
         class CrashOnIterApp(Iterator):
@@ -82,8 +83,8 @@ class TestWSGI(IntegrationTest):
 
         self.assertEqual(1, len(self.server.received))
         payload = self.server.received[0]['json_body']
-        environ = payload['events'][0]['metaData']['environment']
-        self.assertEqual(environ['PATH_INFO'], '/beans')
+        event = payload['events'][0]
+        assert 'environment' not in event['metaData']
 
     def test_bugsnag_middleware_crash_on_close(self):
         class CrashOnCloseApp(Iterator):
@@ -105,8 +106,8 @@ class TestWSGI(IntegrationTest):
 
         self.assertEqual(1, len(self.server.received))
         payload = self.server.received[0]['json_body']
-        environ = payload['events'][0]['metaData']['environment']
-        self.assertEqual(environ['PATH_INFO'], '/beans')
+        event = payload['events'][0]
+        assert 'environment' not in event['metaData']
 
     def test_bugsnag_middleware_respects_user_id(self):
 
@@ -166,8 +167,8 @@ class TestWSGI(IntegrationTest):
 
         self.assertEqual(1, len(self.server.received))
         payload = self.server.received[0]['json_body']
-        environ = payload['events'][0]['metaData']['environment']
-        self.assertEqual(environ['PATH_INFO'], '/beans')
+        event = payload['events'][0]
+        assert 'environment' not in event['metaData']
 
     def test_bugsnag_middleware_attaches_unhandled_data(self):
 
