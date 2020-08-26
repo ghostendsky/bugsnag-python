@@ -1,3 +1,4 @@
+from enum import Enum
 import linecache
 import logging
 import os
@@ -11,6 +12,15 @@ from bugsnag.utils import fully_qualified_class_name as class_name
 from bugsnag.utils import FilterDict, package_version, SanitizingJSONEncoder
 
 
+class Severity(Enum):
+    INFO = 'info'
+    WARNING = 'warning'
+    ERROR = 'error'
+
+    def __str__(self):
+        return self.value
+
+
 class Event:
     """
     A single exception notification to Bugsnag.
@@ -18,6 +28,7 @@ class Event:
     NOTIFIER_NAME = "Python Bugsnag Notifier"
     NOTIFIER_URL = "https://github.com/bugsnag/bugsnag-python"
     PAYLOAD_VERSION = "4.0"
+    # TODO: In the next purging of DeprecationWarning, remove this:
     SUPPORTED_SEVERITIES = ["info", "warning", "error"]
 
     def __init__(self, exception, config, request_config, **options):
@@ -54,9 +65,12 @@ class Event:
         self.send_code = get_config("send_code")
 
         self.context = options.pop("context", None)
-        self.severity = options.pop("severity", "warning")
-        if self.severity not in self.SUPPORTED_SEVERITIES:
-            self.severity = "warning"
+        self.severity = options.pop("severity", Severity.WARNING)
+        if not isinstance(self.severity, Severity):
+            try:
+                self.severity = Severity(self.severity)
+            except ValueError:
+                self.severity = Severity.WARNING
 
         self.unhandled = options.pop("unhandled", False)
         self.severity_reason = options.pop(

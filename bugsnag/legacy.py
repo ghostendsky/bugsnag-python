@@ -3,6 +3,7 @@ import sys
 
 from bugsnag.configuration import RequestConfiguration
 from bugsnag.client import Client
+from bugsnag.event import Severity
 
 import bugsnag
 
@@ -92,7 +93,7 @@ def auto_notify(exception, **options):
         default_client.notify(
             exception,
             unhandled=options.pop('unhandled', True),
-            severity=options.pop('severity', 'error'),
+            severity=options.pop('severity', Severity.ERROR),
             severity_reason=options.pop('severity_reason', {
                 'type': 'unhandledException'
             }),
@@ -111,7 +112,7 @@ def auto_notify_exc_info(exc_info=None, **options):
             default_client.notify_exc_info(
                 exc_type, value, tb,
                 unhandled=options.pop('unhandled', True),
-                severity=options.pop('severity', 'error'),
+                severity=options.pop('severity', Severity.ERROR),
                 severity_reason=options.pop('severity_reason', {
                     'type': 'unhandledException'
                 }),

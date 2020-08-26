@@ -1,6 +1,7 @@
 import logging
 
 import bugsnag
+from bugsnag import Severity
 
 
 class BugsnagHandler(logging.Handler, object):
@@ -95,11 +96,11 @@ class BugsnagHandler(logging.Handler, object):
         levelno = record.levelno or logging.WARNING
 
         if levelno >= logging.ERROR:
-            options['severity'] = 'error'
+            options['severity'] = Severity.ERROR
         elif levelno >= logging.WARNING:
-            options['severity'] = 'warning'
+            options['severity'] = Severity.WARNING
         else:
-            options['severity'] = 'info'
+            options['severity'] = Severity.INFO
 
     def extract_custom_metadata(self, record, options):
         """

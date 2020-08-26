@@ -5,7 +5,7 @@ from functools import wraps
 from types import FunctionType
 
 from bugsnag.configuration import Configuration, RequestConfiguration
-from bugsnag.event import Event
+from bugsnag.event import Event, Severity
 from bugsnag.handlers import BugsnagHandler
 from bugsnag.sessiontracker import SessionTracker
 
@@ -93,7 +93,7 @@ class Client(object):
         if self.configuration.auto_notify:
             self.notify_exc_info(
                 exc_type, exc_value, traceback,
-                severity='error',
+                severity=Severity.ERROR,
                 unhandled=True,
                 severity_reason={
                     'type': 'unhandledException'
