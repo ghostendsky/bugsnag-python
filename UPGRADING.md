@@ -32,6 +32,11 @@ longer supported and will cause an error.
   + config.release_stage
   ```
 
+### Remove unused utilities
+
+* Removed `bugsnag.utils.ThreadLocals` as it has been superseded by the
+  `contextvars` API
+
 ## Migrating from 2.x to 3.x
 
 A few configuration properties were deprecated in the transition from 2.x to

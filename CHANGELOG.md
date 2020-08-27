@@ -3,6 +3,11 @@ Changelog
 
 ## TBD
 
+### Breaking changes
+
+* Removed unneeded `ThreadLocals` utility functions as it has been superseded by
+  `contextvars` API
+
 ### Enhancements
 
 * Support reporting exceptions thrown from threads using
