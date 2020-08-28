@@ -1,4 +1,6 @@
 import logging
+from logging import LogRecord
+from typing import Dict
 
 import bugsnag
 from bugsnag import Severity
@@ -16,13 +18,15 @@ class BugsnagHandler(logging.Handler, object):
                           self.extract_custom_metadata,
                           self.extract_severity]
 
-    def emit(self, record):
+    def emit(self, record: LogRecord):
         """
         Outputs the record to Bugsnag
         """
-        for path in bugsnag.__path__:
-            if path in record.pathname:
-                return
+        if hasattr(bugsnag, '__path__'):
+            paths = getattr(bugsnag, '__path__')
+            for path in paths:
+                if path in record.pathname:
+                    return
 
         options = {
             'meta_data': {},
@@ -44,13 +48,15 @@ class BugsnagHandler(logging.Handler, object):
         client = self.client or bugsnag.legacy.default_client
 
         if 'exception' in options:
-            if isinstance(options['exception'], Exception):
-                client.notify(**options)
+            exception = options.pop('exception')
+            if isinstance(exception, Exception):
+                client.notify(exception, **options)
                 return
             else:
-                custom_exception = options.pop('exception')
                 try:
-                    options['meta_data']['exception'] = custom_exception
+                    metadata = options['meta_data']
+                    if isinstance(metadata, dict):
+                        metadata['exception'] = exception
                 except TypeError:
                     # Means options['meta_data'] is no longer a dictionary
                     pass
@@ -89,7 +95,7 @@ class BugsnagHandler(logging.Handler, object):
         """
         del self.callbacks[:]
 
-    def extract_severity(self, record, options):
+    def extract_severity(self, record: LogRecord, options: Dict):
         """
         Convert log record level into severity levels
         """
@@ -102,7 +108,7 @@ class BugsnagHandler(logging.Handler, object):
         else:
             options['severity'] = Severity.INFO
 
-    def extract_custom_metadata(self, record, options):
+    def extract_custom_metadata(self, record: LogRecord, options: Dict):
         """
         Append the contents of selected fields of a record to the metadata
         of a report
@@ -122,7 +128,7 @@ class BugsnagHandler(logging.Handler, object):
                     attr = getattr(record, field)
                     options['meta_data'][section][field] = attr
 
-    def extract_default_metadata(self, record, options):
+    def extract_default_metadata(self, record: LogRecord, options: Dict):
         """
         Extract log record fields into error report metadata
         """

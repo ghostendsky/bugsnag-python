@@ -2,6 +2,7 @@ from copy import deepcopy
 from uuid import uuid4
 from time import strftime, gmtime
 from threading import Lock, Timer
+from typing import List, Dict, Callable
 import atexit
 
 try:
@@ -17,7 +18,7 @@ from bugsnag.utils import package_version, FilterDict, SanitizingJSONEncoder
 from bugsnag.event import Event
 
 
-class SessionTracker(object):
+class SessionTracker:
 
     MAXIMUM_SESSION_COUNT = 100
     SESSION_PAYLOAD_VERSION = "1.0"
@@ -25,8 +26,9 @@ class SessionTracker(object):
     """
     Session tracking class for Bugsnag
     """
+
     def __init__(self, configuration):
-        self.session_counts = {}
+        self.session_counts = {}  # type: Dict[str, int]
         self.config = configuration
         self.mutex = Lock()
         self.auto_sessions = False
@@ -81,7 +83,7 @@ class SessionTracker(object):
 
             atexit.register(cleanup)
 
-    def __queue_session(self, start_time):
+    def __queue_session(self, start_time: str):
         self.mutex.acquire()
         try:
             if start_time not in self.session_counts:
@@ -90,7 +92,7 @@ class SessionTracker(object):
         finally:
             self.mutex.release()
 
-    def __deliver(self, sessions):
+    def __deliver(self, sessions: List[Dict]):
         if not sessions:
             bugsnag.logger.debug("No sessions to deliver")
             return
@@ -132,14 +134,14 @@ class SessionTracker(object):
             bugsnag.logger.exception('Sending sessions failed %s', e)
 
 
-class SessionMiddleware(object):
+class SessionMiddleware:
     """
     Session middleware ensures that a session is appended to the notification.
     """
-    def __init__(self, bugsnag):
+    def __init__(self, bugsnag: Callable[[Event], Callable]):
         self.bugsnag = bugsnag
 
-    def __call__(self, notification):
+    def __call__(self, notification: Event):
         session = _session_info.get()
         if session:
             if notification.unhandled:

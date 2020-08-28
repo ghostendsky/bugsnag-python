@@ -2,7 +2,7 @@ import sys
 import threading
 
 from functools import wraps
-from types import FunctionType
+from typing import Union, Tuple, Callable, Optional, List, Type
 
 from bugsnag.configuration import Configuration, RequestConfiguration
 from bugsnag.event import Event, Severity
@@ -15,22 +15,25 @@ import bugsnag
 __all__ = ('Client',)
 
 
-class Client(object):
+class Client:
     """
     A Bugsnag monitoring and reporting client.
 
     >>> client = Client(api_key='...')  # doctest: +SKIP
     """
 
-    def __init__(self, configuration=None, install_sys_hook=True, **kwargs):
-        self.configuration = configuration or Configuration()
+    def __init__(self, configuration: Optional[Configuration] = None,
+                 install_sys_hook=True, **kwargs):
+        self.configuration = configuration or Configuration()  # type: Configuration  # noqa: E501
         self.session_tracker = SessionTracker(self.configuration)
         self.configuration.configure(**kwargs)
 
         if install_sys_hook:
             self.install_sys_hook()
 
-    def capture(self, exceptions=None, **options):
+    def capture(self,
+                exceptions: Union[Tuple[Type, ...], Callable, None] = None,
+                **options):
         """
         Run a block of code within the clients context.
         Any exception raised will be reported to bugsnag.
@@ -57,12 +60,12 @@ class Client(object):
         ...     raise Exception('an exception which does not get captured')
         """
 
-        if isinstance(exceptions, FunctionType):
+        if callable(exceptions):
             return ClientContext(self, (Exception,))(exceptions)
 
         return ClientContext(self, exceptions, **options)
 
-    def notify(self, exception, asynchronous=None, **options):
+    def notify(self, exception: BaseException, asynchronous=None, **options):
         """
         Notify bugsnag of an exception.
 
@@ -136,8 +139,8 @@ class Client(object):
                 threading.excepthook = self.threading_excepthook
                 self.threading_excepthook = None
 
-    def deliver(self, notification,
-                asynchronous=None):  # type: ignore
+    def deliver(self, notification: Event,
+                asynchronous: Optional[bool] = None):
         """
         Deliver the exception notification to Bugsnag.
         """
@@ -179,7 +182,7 @@ class Client(object):
         self.configuration.internal_middleware.run(notification,
                                                    run_middleware)
 
-    def should_deliver(self, notification):  # type: (Event) -> bool
+    def should_deliver(self, notification: Event) -> bool:
         # Return early if we shouldn't notify for current release stage
         if not self.configuration.should_notify():
             return False
@@ -190,19 +193,21 @@ class Client(object):
 
         return True
 
-    def log_handler(self, extra_fields=None):
+    def log_handler(self, extra_fields: List[str] = None) -> BugsnagHandler:
         return BugsnagHandler(client=self, extra_fields=extra_fields)
 
 
-class ClientContext(object):
-    def __init__(self, client, exception_types=None, **options):
+class ClientContext:
+    def __init__(self, client,
+                 exception_types: Optional[Tuple[Type, ...]] = None,
+                 **options):
         self.client = client
         self.options = options
         if 'severity' in options:
             options['severity_reason'] = dict(type='userContextSetSeverity')
         self.exception_types = exception_types or (Exception,)
 
-    def __call__(self, function):
+    def __call__(self, function: Callable):
         @wraps(function)
         def decorate(*args, **kwargs):
             try:

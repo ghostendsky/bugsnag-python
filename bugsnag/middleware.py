@@ -1,8 +1,15 @@
+from typing import Callable, Optional, Type
+
 import bugsnag
+from bugsnag.event import Event
 
 
-class SimpleMiddleware(object):
-    def __init__(self, before=None, after=None):
+Middleware = Callable[[Event], Callable]
+
+
+class SimpleMiddleware:
+    def __init__(self, before: Optional[Middleware] = None,
+                 after: Optional[Middleware] = None):
         self.before = before
         self.after = after
 
@@ -22,15 +29,15 @@ class SimpleMiddleware(object):
         return middleware
 
 
-class DefaultMiddleware(object):
+class DefaultMiddleware:
     """
     DefaultMiddleware provides the transformation from request_config into
     meta-data that has always been supported by bugsnag-python.
     """
-    def __init__(self, bugsnag):
+    def __init__(self, bugsnag: Middleware):
         self.bugsnag = bugsnag
 
-    def __call__(self, notification):
+    def __call__(self, notification: Event):
         config = notification.request_config
         notification.set_user(id=config.user_id)
         notification.set_user(**config.user)
@@ -55,14 +62,14 @@ class DefaultMiddleware(object):
         self.bugsnag(notification)
 
 
-class MiddlewareStack(object):
+class MiddlewareStack:
     """
     Manages a stack of Bugsnag middleware.
     """
     def __init__(self):
         self.stack = []
 
-    def before_notify(self, func):
+    def before_notify(self, func: Middleware):
         """
         Add a function to be run before bugsnag is notified.
 
@@ -77,7 +84,7 @@ class MiddlewareStack(object):
         """
         self.append(SimpleMiddleware(before=func))
 
-    def after_notify(self, func):
+    def after_notify(self, func: Middleware):
         """
         Add a function to be run after bugsnag is notified.
 
@@ -85,7 +92,7 @@ class MiddlewareStack(object):
         """
         self.append(SimpleMiddleware(after=func))
 
-    def append(self, middleware):
+    def append(self, middleware: Middleware):
         """
         Add a middleware to the end of the stack.
 
@@ -106,7 +113,7 @@ class MiddlewareStack(object):
         """
         self.stack.append(middleware)
 
-    def insert_before(self, target_class, middleware):
+    def insert_before(self, target_class: Type, middleware: Middleware):
         """
         Adds a middleware to the stack in the position before
         the target_class.
@@ -117,7 +124,7 @@ class MiddlewareStack(object):
         except ValueError:
             self.append(middleware)
 
-    def insert_after(self, target_class, middleware):
+    def insert_after(self, target_class: Type, middleware: Middleware):
         """
         Adds a middleware to the stack in the position after
         the target_class.
@@ -128,7 +135,7 @@ class MiddlewareStack(object):
         except ValueError:
             self.append(middleware)
 
-    def run(self, notification, callback):
+    def run(self, notification: Event, callback: Callable[[], None]):
         """
         Run all the middleware in order, then call the callback.
         """

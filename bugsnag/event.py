@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any, Dict, Optional
 import linecache
 import logging
 import os
@@ -31,7 +32,8 @@ class Event:
     # TODO: In the next purging of DeprecationWarning, remove this:
     SUPPORTED_SEVERITIES = ["info", "warning", "error"]
 
-    def __init__(self, exception, config, request_config, **options):
+    def __init__(self, exception: BaseException, config, request_config,
+                 **options):
         """
         Create a new notification
 
@@ -88,9 +90,9 @@ class Event:
         self.grouping_hash = options.pop("grouping_hash", None)
         self.api_key = options.pop("api_key", get_config("api_key"))
 
-        self.session = None
+        self.session = None  # type: Optional[Dict]
 
-        self.meta_data = {}
+        self.meta_data = {}  # type: Dict[str, Dict[str, Any]]
         for name, tab in options.pop("meta_data", {}).items():
             self.add_tab(name, tab)
 
